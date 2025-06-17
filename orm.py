@@ -199,56 +199,154 @@
 # import datetime
 # from django.db.models import Count, Avg, Sum, Max, Min
 # from django.db.models import Q, F
-# ans1 = Books.objects.all()
-# ans2 = Books.objects.all().values_list('title', 'published_date')
-# ans3 = Authors.objects.all().filter(popularity_score=0).values_list('firstname', 'lastname')
-# ans4 = Authors.objects.all().filter(firstname__startswith='a', popularity_score__gte=8).values_list('firstname', 'popularity_score')
-# ans5 = Authors.objects.all().filter(firstname__icontains='aa').values_list('firstname')
-# ans6 = Authors.objects.all().filter(pk__in=[1, 3, 23, 43, 134, 25])
-# ans7 = Authors.objects.all().filter(joindate__gte=datetime.date(year=2012, month=9, day=1)).order_by('joindate').values_list('firstname', 'joindate')
-# ans8 = Publishers.objects.all().order_by('lastname').values_list('lastname').distinct()[:10]
-# ans9 = [Authors.objects.all().order_by('joindate').last(),
-# Publishers.objects.all().order_by('-joindate').first()]
-# ans10 = Authors.objects.all().order_by('-joindate').values_list('firstname', 'lastname', 'joindate').first()
-# ans11 = Authors.objects.all().filter(joindate__year__gte=2013)
-# ans12 = Books.objects.all().filter(author__popularity_score__gte=7).aggregate(total_book_price=Sum('price'))
-# ans13 = Books.objects.all().filter(author__firstname__contains='a').values_list('title', flat=True)
-# ans14 = Books.objects.all().filter(author__pk__in=[1, 3, 4]).aggregate('price')
-# ans15 = Authors.objects.all().values_list('firstname', 'recommendedby__firstname')
-# ans16 = Authors.objects.all().filter(books__publisher__pk=1)
-# user1 = Users.objects.create(username='user1', email='user1@test.com')
-# user2 = Users.objects.create(username='user2', email='user2@test.com')
-# user3 = Users.objects.create(username='user3', email='user3@test.com')
-# ans17 = Authors.objects.get(pk=1).followers.add(user1, user2, user3)
-# ans18 = Authors.objects.get(pk=2).followers.set(user1)
-# ans19 = Authors.objects.get(pk=1).followers.add(user1)
-# ans20 = Authors.objects.get(pk=1).followers.remove(user1)
-# ans21 = Users.objects.get(pk=1).followed_authors.all().values_list('firstname', flat=True)
-# ans22 = Authors.objects.all().filter(books__title__icontains='tle')
-# ans23 = Authors.objects.all().filter(Q(firstname__istartswith='a') and ( Q(popularity_score__gt=5) or Q(joindate__year__gt=2014)))
-# ans24 = Authors.objects.all().get(pk=1)
-# ans25 = Authors.objects.all()[:10]
-# qs = Authors.objects.all().filter(popularity_scre=7)
-# author1 = qs.first()
-# author2 = qs.last()
-# ans26 = [author1, author2]
-# ans27 = Authors.objects.all().filter(joindate__year__gte=2012, popularity_score__gte=4, joindate__day__gte=12, firstame__istartswith='a')
-# ans28 = Authors.objects.all().exclude(joindate__year=2012)
-# oldest_author = Authors.objects.all().aggregate(Min('joindate'))
-# newest_author = Authors.objects.all().aggregate(Max('joindate'))
-# avg_pop_score = Authors.objects.all().aggregate(Avg('popularity_score'))
-# sum_price = Books.objects.all().aggregate(Sum('price'))
-# ans29 = [oldest_author, newest_author, avg_pop_score, sum_price]
-# ans30 = Authors.objects.all().filter(recommendedby__isnull=True)
-# one = Books.objects.all().filter(author__isnull=False)
-# two = Books.objects.all().filter(author__isnull=False, author__recommender__isnull=True)
-# ans31 = [one, two]
-# ans32 = Books.objects.all().filter(author__pk=1).aggregate(Sum('price'))
-# ans33 = Books.objects.all().order_by('published_date').last().title
-# ans34 = Books.objects.all().aggregate(Avg('price'))
-# ans35 = Publishers.objects.filter(books__author__pk=1).aggregate(Max('popularity_score'))
-# ans36 = Authors.objects.filter(books__title__icontains='ab').count()
-# ans37 = Authors.objects.annotate(f_count=Count('followers')).filter(f_count__gt=216)
-# ans38 = Authors.objects.filter(joindate__gt=datetime.date(year=2014, month=9, day=20)).aggregate(Avg('popularity_score'))
-# ans39 = Books.objects.all().annotate(bk_count=Count('author__books')).filter(bk_count__gt=10).distinct()
-# ans40 = Books.objects.all().annotate(count_title=Count('title')).filter(count_title__gt=1)
+# 1. Fetch title and published_date of all books
+
+# Books.objects.values('title', 'published_date')
+# 2. Fetch first name and last name of all new authors (popularity_score = 0)
+
+# Author.objects.filter(popularity_score=0).values('firstname', 'lastname')
+# 3. Fetch first name and popularity score of authors whose first name starts with 'A' and popularity score is >= 8
+
+# Author.objects.filter(firstname_istartswith='A', popularity_score_gte=8).values('firstname', 'popularity_score')
+# 4. Fetch first name of authors with 'aa' (case-insensitive) in their first name
+
+# Author.objects.filter(firstname__icontains='aa').values('firstname')
+# 5. Fetch authors whose IDs are in the list [1, 3, 23, 43, 134, 25]
+
+# Author.objects.filter(id__in=[1, 3, 23, 43, 134, 25])
+# 6. Fetch publishers who joined after or in September 2012, showing first name and join date, ordered by join date
+
+# Publisher.objects.filter(joindate__gte='2012-09-01').order_by('joindate').values('firstname', 'joindate')
+# 7. Fetch ordered list of first 10 last names of publishers, without duplicates
+
+# Publisher.objects.values('lastname').distinct().order_by('lastname')[:10]
+# 8. Get the signup date for the last joined Author and Publisher
+
+# last_author_signup = Author.objects.latest('joindate').joindate
+# last_publisher_signup = Publisher.objects.latest('joindate').joindate
+# ans9 = [last_author_signup, last_publisher_signup]
+# 9. Get first name, last name, and join date of the last author who joined
+
+# Author.objects.latest('joindate').values('firstname', 'lastname', 'joindate')
+# 10. Fetch authors who joined after or in the year 2013
+
+# Author.objects.filter(joindate_year_gte=2013)
+# 11. Fetch total price of all books written by authors with popularity score 7 or higher
+
+# from django.db.models import Sum
+# Books.objects.filter(author_popularity_score_gte=7).aggregate(total_price=Sum('price'))
+# 12. Fetch titles of all books written by authors whose first name starts with 'A', as a flat list
+
+# Books.objects.filter(author_firstname_istartswith='A').values_list('title', flat=True)
+# 13. Get total price of all books written by authors with primary keys in [1, 3, 4]
+
+# Books.objects.filter(author_id_in=[1, 3, 4]).aggregate(total_price=Sum('price'))
+# 14. Produce a list of all authors along with their recommender
+
+# Author.objects.select_related('recommendedby').values('firstname', 'lastname', 'recommendedby_firstname', 'recommendedby_lastname')
+# 15. Produce list of authors who published their book by publisher with primary key = 1, ordered by first name
+
+# Author.objects.filter(books__publisher_id=1).order_by('firstname').distinct()
+# 16. Create three new users and add them as followers of the author with primary key = 1
+
+# user1 = User.objects.create(username='user1', email='user1@example.com')
+# user2 = User.objects.create(username='user2', email='user2@example.com')
+# user3 = User.objects.create(username='user3', email='user3@example.com')
+# author = Author.objects.get(pk=1)
+# author.followers.add(user1, user2, user3)
+# 17. Set the followers list of the author with primary key = 2, to only one user
+
+# author = Author.objects.get(pk=2)
+# author.followers.set([user1])  # Assuming user1 is already created
+# 18. Add new users to the followers of the author with primary key = 1
+
+# new_users = [user4, user5]  # Assuming user4 and user5 are already created
+# author = Author.objects.get(pk=1)
+# author.followers.add(*new_users)
+# 19. Remove one user from the followers of the author with primary key = 1
+
+# author = Author.objects.get(pk=1)
+# author.followers.remove(user1)  # Assuming user1 is already created
+# 20. Get first names of all authors whom the user with primary key = 1 is following
+
+# User.objects.get(pk=1).followed_authors.values_list('firstname', flat=True)
+# 21. Fetch authors who wrote a book with "tle" in the title
+
+# Author.objects.filter(books_title_icontains='tle').distinct()
+# 22. Fetch authors whose names start with 'A' (case-insensitive), and either their popularity score is greater than 5 or they joined after 2014, using Q objects
+
+# from django.db.models import Q
+# Author.objects.filter(
+#     Q(firstname__istartswith='A') &
+#     (Q(popularity_score_gt=5) | Q(joindateyear_gt=2014))
+# )
+# 23. Retrieve a specific object with primary key = 1 from the Author table
+
+# Author.objects.get(pk=1)
+# 24. Retrieve the first N=10 records from the Author table
+
+# Author.objects.all()[:10]
+# 25. Retrieve records with popularity score = 7, and get the first and last record of that list
+
+# authors = Author.objects.filter(popularity_score=7)
+# first_author = authors.first()
+# last_author = authors.last()
+# 26. Retrieve all authors who joined after or in 2012, popularity score >= 4, join date after 12th, and first name starts with 'a' (case-insensitive), without using Q objects
+
+# Author.objects.filter(
+#     joindate_year_gte=2012,
+#     popularity_score__gte=4,
+#     joindate_day_gt=12,
+#     firstname__istartswith='a'
+# )
+# 27. Retrieve all authors who did not join in 2012
+
+# Author.objects.exclude(joindate__year=2012)
+# 28. Retrieve oldest author, newest author, average popularity score of authors, sum of price of all books
+
+# from django.db.models import Avg, Sum
+# oldest_author = Author.objects.earliest('joindate')
+# newest_author = Author.objects.latest('joindate')
+# avg_popularity = Author.objects.aggregate(Avg('popularity_score'))
+# total_price = Books.objects.aggregate(Sum('price'))
+# 29. Retrieve all authors who have no recommender (recommendedby is null)
+
+# Author.objects.filter(recommendedby__isnull=True)
+# 30. Retrieve books that do not have any authors (author is null), or books whose authors are present but do not have a recommender (author is not null and author's recommender is null)
+
+# Books.objects.filter(
+#     Q(author__isnull=True) |
+#     Q(author_recommendedby_isnull=True)
+# )
+# 31. Total price of books written by author with primary key = 1, oldest book, and latest book
+
+# from django.db.models import Sum
+# books = Books.objects.filter(author_id=1)
+# total_price = books.aggregate(Sum('price'))
+# oldest_book = books.earliest('published_date')
+# latest_book = books.latest('published_date')
+# 32. Among the publishers, what is the oldest book any publisher has published
+
+# Books.objects.order_by('published_date').first()
+# 33. Average price of all books in the database
+
+# Books.objects.aggregate(Avg('price'))
+# 34. Maximum popularity score of publishers who published a book for the author with primary key = 1
+
+# Publisher.objects.filter(books__author_id=1).aggregate(Max('popularity_score'))
+# 35. Count the number of authors who have written a book containing the phrase 'ab' (case-insensitive) in the title
+
+# Author.objects.filter(books_title_icontains='ab').distinct().count()
+# 36. Get all authors with more than 216 followers
+
+# Author.objects.annotate(follower_count=Count('followers')).filter(follower_count__gt=216)
+# 37. Get average popularity score of authors who joined after 20th September 2014
+
+# Author.objects.filter(joindate__gt='2014-09-20').aggregate(Avg('popularity_score'))
+# 38. Generate a list of books whose author has written more than 10 books
+
+# from django.db.models import Count
+# Books.objects.filter(author_bookscount_gt=10)
+# 39. Get the list of books with duplicate titles
+
+# Books.objects.values('title').annotate(title_count=Count('title')).filter(title_count__gt=1)
